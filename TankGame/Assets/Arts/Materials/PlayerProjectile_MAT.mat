@@ -1,0 +1,40 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!21 &2100000
+Material:
+  serializedVersion: 6
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: PlayerProjectile_MAT
+  m_Shader: {fileID: -6465566751694194690, guid: c8a0b3d0a206cfd4a85767ad5a252a7a, type: 3}
+  m_ShaderKeywords: 
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 0
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: -1
+  stringTagMap: {}
+  disabledShaderPasses: []
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs:
+    - unity_Lightmaps:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - unity_LightmapsInd:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - unity_ShadowMasks:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    m_Floats:
+    - Vector1_9a8f7ac22ff34a059e88f4c9c2facf03: 1.32
+    - Vector1_d8ba8ea62c654951bb70c524b1dc8f0a: 1
+    m_Colors:
+    - Color_23b58db7afab444899f8ab09147842d8: {r: 1, g: 0.67058825, b: 0.08627451, a: 0}
+    - Color_61c1eedac4fb40aa996e97afabf1d352: {r: 3.482202, g: 1.4201922, b: 0.02731139, a: 1}
+  m_BuildTextureStacks: []
