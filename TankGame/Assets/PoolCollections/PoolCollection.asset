@@ -12,4 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 97d27a4455e945fca6ffd9c3770b4d82, type: 3}
   m_Name: PoolCollection
   m_EditorClassIdentifier: 
-  PrefabPoolsList: []
+  PrefabPoolsList:
+  - Prefab: {fileID: 6805518265255599402, guid: c123d1c8ffa53b64696b747b591e305e, type: 3}
+    Tag: BasicBullet
+    ObjCount: 50
+    IsExpandable: 1

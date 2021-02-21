@@ -14,6 +14,7 @@ public class Player : MonoBehaviour
 
     private Mover _mover;
     private TurretRotator _turretRotator;
+    private Shooter _shooter;
     
     [SerializeField] private ATurret _currentTurret;
 
@@ -32,12 +33,14 @@ public class Player : MonoBehaviour
 
         _mover = new Mover(this);
         _turretRotator = new TurretRotator(this);
+        _shooter = new Shooter(this);
     }
     
     private void Update()
     {
         _mover.Tick();
         _turretRotator.Tick();
+        _shooter.Tick();
     }
 
     private void OnValidate()
@@ -58,6 +61,46 @@ public class Player : MonoBehaviour
         {
             _agent = this.GetComponent<NavMeshAgent>();
         }
+    }
+}
+
+public class Shooter
+{
+    private readonly Player _player;
+    private readonly InputAction _shootAction;
+
+    private ATurret _currentTurret;
+
+    private float _timer;
+    
+    public Shooter(Player player)
+    {
+        _player = player;
+        _shootAction = _player.Controller.Gameplay.Shoot;
+        
+        _currentTurret = _player.CurrentTurret;
+    }
+
+    public void Tick()
+    {
+        if (_shootAction.phase == InputActionPhase.Started)
+        {
+            if (_currentTurret != null)
+            {
+                if (_timer <= 0f)
+                {
+                    _currentTurret.Shoot();
+                    _timer = _currentTurret.TimeBetweenShots;
+                }
+            }
+            else
+            {
+                _currentTurret = _player.CurrentTurret;
+            }
+        }
+        
+        _timer -= Time.deltaTime;
+        _timer = Mathf.Clamp(_timer, 0, _currentTurret.TimeBetweenShots);
     }
 }
 
@@ -166,7 +209,8 @@ public class Mover
 
             _lastInput = _currentInput;
 
-            _moveDirection = _currentDotProduct > 0 ? _transform.forward : -_transform.forward;
+            var forward = _transform.forward;
+            _moveDirection = _currentDotProduct > 0 ? forward : -forward;
 
             _agent.Move(_moveDirection * (_speed * _speedMultiplier));
         }

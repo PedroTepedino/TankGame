@@ -1,4 +1,5 @@
 using System;
+using DG.Tweening;
 using UnityEngine;
 
 public class BasicBullet : AProjectile
@@ -19,7 +20,8 @@ public class BasicBullet : AProjectile
 
     public override void Fire()
     {
-        _rigidbody.AddForce(this.transform.forward * _speed, ForceMode.VelocityChange);
+        this.transform.DOScale(2f, 0.2f).From(0f).SetEase(Ease.OutBack);
+        _rigidbody.velocity = this.transform.forward * _speed;
     }
 
     private void Update()
@@ -32,7 +34,7 @@ public class BasicBullet : AProjectile
         }
     }
 
-    private void OnCollisionEnter(Collision other)
+    private void OnTriggerEnter(Collider other)
     {
         other.gameObject.GetComponent<IHittable>()?.Hit();
         
@@ -41,6 +43,7 @@ public class BasicBullet : AProjectile
 
     private void Explode()
     {
+        _rigidbody.velocity = Vector3.zero;
         this.gameObject.SetActive(false);
     }
 

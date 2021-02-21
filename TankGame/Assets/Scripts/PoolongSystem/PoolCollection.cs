@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using Sirenix.OdinInspector;
 using UnityEngine;
 
@@ -8,7 +7,7 @@ using UnityEngine;
 public class PoolCollection : ScriptableObject
 {
     [ValidateInput("CheckSameTags", "Different Tags cannot be equal!")]
-    //[InlineEditor(InlineEditorObjectFieldModes.Hidden)] 
+    [ListDrawerSettings(Expanded = true)]
     public PrefabPool[] PrefabPoolsList;
 
     private bool CheckSameTags()

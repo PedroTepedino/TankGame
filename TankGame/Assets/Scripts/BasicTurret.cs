@@ -12,7 +12,9 @@ public class BasicTurret : ATurret
 
     public override void Shoot()
     {
-        
+        var projectile = PoolingSystem.Instance.SpawnObject(_projectileType, this.transform.TransformPoint(_shootingPoint),
+            this.transform.rotation);
+        projectile.GetComponent<AProjectile>()?.Fire();
     }
 
     private void OnDrawGizmos()
