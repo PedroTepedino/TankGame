@@ -1,5 +1,3 @@
-using System;
-using DG.Tweening;
 using UnityEngine;
 
 public class BasicBullet : AProjectile
@@ -20,7 +18,6 @@ public class BasicBullet : AProjectile
 
     public override void Fire()
     {
-        this.transform.DOScale(2f, 0.2f).From(0f).SetEase(Ease.OutBack);
         _rigidbody.velocity = this.transform.forward * _speed;
     }
 

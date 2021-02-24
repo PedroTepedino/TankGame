@@ -15,5 +15,13 @@ MonoBehaviour:
   PrefabPoolsList:
   - Prefab: {fileID: 6805518265255599402, guid: c123d1c8ffa53b64696b747b591e305e, type: 3}
     Tag: BasicBullet
-    ObjCount: 50
+    ObjCount: 10
+    IsExpandable: 1
+  - Prefab: {fileID: 5208446619511205657, guid: 6b477550e7345d147bb99fe5b491bbc1, type: 3}
+    Tag: EnemyBullet
+    ObjCount: 10
+    IsExpandable: 1
+  - Prefab: {fileID: 3801783274065162710, guid: 8aa60d03b179a6342aa07d518e1014a1, type: 3}
+    Tag: BasicEnemy
+    ObjCount: 1
     IsExpandable: 1

@@ -1,8 +1,9 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
 using UnityEngine.AI;
 using UnityEngine.InputSystem;
 
-public class Player : MonoBehaviour
+public class Player : MonoBehaviour, IHittable 
 {
     public PlayerInputs Controller { get; private set; }
     public NavMeshAgent Agent => _agent;
@@ -12,9 +13,12 @@ public class Player : MonoBehaviour
     public ATurret CurrentTurret => _currentTurret;
     public float MaxTurretRotation => _maxTurretRotation;
 
+    //// Components
     private Mover _mover;
     private TurretRotator _turretRotator;
     private Shooter _shooter;
+    private LifeSystem _lifeSystem;
+    ////
     
     [SerializeField] private ATurret _currentTurret;
 
@@ -26,6 +30,12 @@ public class Player : MonoBehaviour
     [SerializeField] private float _maxRotationAngle = 5f;
     
     [SerializeField] private float _maxTurretRotation = 5f;
+
+    [SerializeField] private int _maxHealth = 3;
+    
+    //// Actions
+
+    public static event Action<LifeSystem> OnPlayerHealthChanged;
     
     private void Awake()
     {
@@ -34,13 +44,41 @@ public class Player : MonoBehaviour
         _mover = new Mover(this);
         _turretRotator = new TurretRotator(this);
         _shooter = new Shooter(this);
+        _lifeSystem = new LifeSystem(_maxHealth);
     }
-    
+
+    private void OnEnable()
+    {
+        _lifeSystem.OnHealthChanged += OnHealthChanged;
+        _lifeSystem.OnDeath += ListenOnDeath;
+    }
+
+    private void OnDisable()
+    {
+        _lifeSystem.OnHealthChanged -= OnHealthChanged;
+        _lifeSystem.OnDeath -= ListenOnDeath;
+    }
+
     private void Update()
     {
         _mover.Tick();
         _turretRotator.Tick();
         _shooter.Tick();
+    }
+    
+    public void Hit()
+    {
+        _lifeSystem.Damage();
+    }
+    
+    private void OnHealthChanged(LifeSystem lifeSystem)
+    {
+        OnPlayerHealthChanged?.Invoke(lifeSystem);
+    }
+
+    private void ListenOnDeath()
+    {
+        this.gameObject.SetActive(false);
     }
 
     private void OnValidate()
@@ -50,7 +88,7 @@ public class Player : MonoBehaviour
             _rigidbody = this.GetComponent<Rigidbody>();
         }
 
-        if(_rigidbody != null)
+        if (_rigidbody != null)
         {
             _rigidbody.constraints = (RigidbodyConstraints) 80; // Freeze rotation X & Z
 
@@ -61,7 +99,57 @@ public class Player : MonoBehaviour
         {
             _agent = this.GetComponent<NavMeshAgent>();
         }
+
+        if (_currentTurret == null)
+        {
+            _currentTurret = this.GetComponentInChildren<ATurret>();
+        }
     }
+}
+
+public class LifeSystem
+{
+    public int MaxHealth { get; }
+    public int CurrentHealth { get; private set; }
+
+    private bool IsDead => CurrentHealth <= 0;
+    
+    public event Action<LifeSystem> OnHealthChanged;
+    public event Action OnDeath;
+    
+    public LifeSystem(int maxHealth)
+    {
+        MaxHealth = maxHealth;
+        CurrentHealth = maxHealth;
+    }
+
+    public void Damage(int damage = 1)
+    {
+        CurrentHealth = AddClampHealth(-damage);
+
+        if (IsDead)
+        {
+            Die();    
+        }
+
+        OnHealthChanged?.Invoke(this);
+    }
+
+    public void Heal(int healAmount = 1)
+    {
+        CurrentHealth = AddClampHealth(healAmount);
+
+        OnHealthChanged?.Invoke(this);
+    }
+
+    private void Die()
+    {
+        OnDeath?.Invoke();
+    }
+
+    public void FullHeal() => Heal(MaxHealth);
+
+    private int AddClampHealth(int addedValue) => Mathf.Clamp(CurrentHealth + addedValue,0, MaxHealth);
 }
 
 public class Shooter

@@ -1,8 +1,9 @@
-﻿using UnityEngine;
+﻿using Sirenix.OdinInspector;
+using UnityEngine;
 
 public abstract class ATurret : MonoBehaviour, IShooter
 {
-    [SerializeField] protected string _projectileType;
+    [SerializeField] [EnumToggleButtons] protected PoolCollectionTags _projectileType;
 
     [SerializeField] private float _timeBetweenShots;
     public float TimeBetweenShots => _timeBetweenShots;
