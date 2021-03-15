@@ -1,10 +1,9 @@
 ﻿using System;
 using System.Collections;
-using System.Data.SqlTypes;
-using System.Runtime.CompilerServices;
 using Sirenix.OdinInspector;
 using UnityEngine;
 using UnityEngine.AI;
+using UnityEngine.Events;
 using UnityEngine.InputSystem;
 
 public class Player : MonoBehaviour, IHittable 
@@ -65,6 +64,8 @@ public class Player : MonoBehaviour, IHittable
     
     //// Actions
     public static event Action<LifeSystem> OnPlayerHealthChanged;
+    [SerializeField] private UnityEvent _onHeatStun;
+    [SerializeField] private UnityEvent _onHeatStunRecover;
 
     private void Awake()
     {
@@ -162,10 +163,15 @@ public class Player : MonoBehaviour, IHittable
     private IEnumerator EndHeatStun()
     {
         _heatStunned = true;
+        _dasher.Disable();
+        _onHeatStun?.Invoke();
         
         yield return _waitForSecondsHeatStun;
             
         _heatStunned = false;
+        _dasher.Enable();
+        _onHeatStunRecover?.Invoke();
+        
         _heatManager.HeatHalfWay();
 
         _heatStunRoutine = null;
@@ -262,6 +268,7 @@ public class Dasher
     
     private Vector2 _moveDirection = Vector2.zero;
 
+    private bool _enabled;
     public float DashCoolAmount { get; }
 
     public event Action OnDashed;
@@ -275,6 +282,7 @@ public class Dasher
         _timeBetweenDashes = timeBetweenDashes;
         _distance = distance;
         _collisionLayers = collisionLayers;
+        _enabled = true;
 
         _dashAction.performed += OnDash;
 
@@ -291,6 +299,8 @@ public class Dasher
 
     private void OnDash(InputAction.CallbackContext context)
     {
+        if (!_enabled) return;
+        
         var dashDirection = new Vector3(_moveDirection.x, 0, _moveDirection.y);
         var agentPosition = _agent.transform.position;
         
@@ -325,6 +335,9 @@ public class Dasher
     {
         _moveDirection = context.ReadValue<Vector2>();
     }
+
+    public void Enable() => _enabled = true;
+    public void Disable() => _enabled = false;
 }
 
 public class LifeSystem

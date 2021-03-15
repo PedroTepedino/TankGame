@@ -746,6 +746,7 @@ GameObject:
   m_Component:
   - component: {fileID: 3072657773360774418}
   - component: {fileID: 489905288}
+  - component: {fileID: 4482687451121636686}
   - component: {fileID: 489905289}
   - component: {fileID: 489905287}
   - component: {fileID: 489905291}
@@ -801,6 +802,19 @@ MonoBehaviour:
   _maxHeat: 120
   _heatRecoverRate: 20
   _stunTimeForUnderHeat: 2
+--- !u!114 &4482687451121636686
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7394740556883643266}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6819097f3e7946fa95afc1d2c3e73b0c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _emissiveMaterial: {fileID: 2100000, guid: 9fc5adaced277e540b3f58a806cdea2c, type: 2}
 --- !u!54 &489905289
 Rigidbody:
   m_ObjectHideFlags: 0
