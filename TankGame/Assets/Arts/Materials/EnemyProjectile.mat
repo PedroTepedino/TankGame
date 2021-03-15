@@ -8,7 +8,7 @@ Material:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: EnemyProjectile
-  m_Shader: {fileID: -6465566751694194690, guid: 6014e77808e07b24c8a824cedaea0d0d, type: 3}
+  m_Shader: {fileID: -6465566751694194690, guid: c8a0b3d0a206cfd4a85767ad5a252a7a, type: 3}
   m_ShaderKeywords: 
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
@@ -34,7 +34,10 @@ Material:
     m_Floats:
     - Vector1_69e571c45052410e89981ff643dd0a37: 1
     - Vector1_87d86f6a39dc4540a53a9593130960c9: 5.64
+    - Vector1_9a8f7ac22ff34a059e88f4c9c2facf03: 0.93
     m_Colors:
+    - Color_23b58db7afab444899f8ab09147842d8: {r: 1, g: 1, b: 1, a: 1}
     - Color_4d41881977b749049dfd5119c97aa42e: {r: 766.9961, g: 0, b: 0, a: 0}
+    - Color_61c1eedac4fb40aa996e97afabf1d352: {r: 95.87451, g: 0, b: 0, a: 1}
     - Color_c7df1de001314e1097c5b86d8bf9b720: {r: 1, g: 0.36320752, b: 0.36320752, a: 0}
   m_BuildTextureStacks: []

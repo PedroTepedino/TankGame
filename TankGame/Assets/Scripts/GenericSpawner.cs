@@ -27,3 +27,4 @@ public class GenericSpawner : MonoBehaviour
         }
     }
 }
+

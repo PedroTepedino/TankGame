@@ -49,6 +49,14 @@ public class @PlayerInputs : IInputActionCollection, IDisposable
                     ""expectedControlType"": ""Vector2"",
                     ""processors"": """",
                     ""interactions"": """"
+                },
+                {
+                    ""name"": ""Dash"",
+                    ""type"": ""Button"",
+                    ""id"": ""72fed0b7-7af8-4673-8cdf-707cb3000792"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """"
                 }
             ],
             ""bindings"": [
@@ -161,6 +169,28 @@ public class @PlayerInputs : IInputActionCollection, IDisposable
                     ""action"": ""MouseTest"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""4ee75c92-1cbb-4606-bf82-6e221a51c44c"",
+                    ""path"": ""<Gamepad>/leftShoulder"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Dash"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""34e861fe-3e99-4818-8eed-bafc26d0b098"",
+                    ""path"": ""<Keyboard>/space"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""Dash"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
                 }
             ]
         }
@@ -173,6 +203,7 @@ public class @PlayerInputs : IInputActionCollection, IDisposable
         m_Gameplay_Aim = m_Gameplay.FindAction("Aim", throwIfNotFound: true);
         m_Gameplay_Shoot = m_Gameplay.FindAction("Shoot", throwIfNotFound: true);
         m_Gameplay_MouseTest = m_Gameplay.FindAction("MouseTest", throwIfNotFound: true);
+        m_Gameplay_Dash = m_Gameplay.FindAction("Dash", throwIfNotFound: true);
     }
 
     public void Dispose()
@@ -226,6 +257,7 @@ public class @PlayerInputs : IInputActionCollection, IDisposable
     private readonly InputAction m_Gameplay_Aim;
     private readonly InputAction m_Gameplay_Shoot;
     private readonly InputAction m_Gameplay_MouseTest;
+    private readonly InputAction m_Gameplay_Dash;
     public struct GameplayActions
     {
         private @PlayerInputs m_Wrapper;
@@ -234,6 +266,7 @@ public class @PlayerInputs : IInputActionCollection, IDisposable
         public InputAction @Aim => m_Wrapper.m_Gameplay_Aim;
         public InputAction @Shoot => m_Wrapper.m_Gameplay_Shoot;
         public InputAction @MouseTest => m_Wrapper.m_Gameplay_MouseTest;
+        public InputAction @Dash => m_Wrapper.m_Gameplay_Dash;
         public InputActionMap Get() { return m_Wrapper.m_Gameplay; }
         public void Enable() { Get().Enable(); }
         public void Disable() { Get().Disable(); }
@@ -255,6 +288,9 @@ public class @PlayerInputs : IInputActionCollection, IDisposable
                 @MouseTest.started -= m_Wrapper.m_GameplayActionsCallbackInterface.OnMouseTest;
                 @MouseTest.performed -= m_Wrapper.m_GameplayActionsCallbackInterface.OnMouseTest;
                 @MouseTest.canceled -= m_Wrapper.m_GameplayActionsCallbackInterface.OnMouseTest;
+                @Dash.started -= m_Wrapper.m_GameplayActionsCallbackInterface.OnDash;
+                @Dash.performed -= m_Wrapper.m_GameplayActionsCallbackInterface.OnDash;
+                @Dash.canceled -= m_Wrapper.m_GameplayActionsCallbackInterface.OnDash;
             }
             m_Wrapper.m_GameplayActionsCallbackInterface = instance;
             if (instance != null)
@@ -271,6 +307,9 @@ public class @PlayerInputs : IInputActionCollection, IDisposable
                 @MouseTest.started += instance.OnMouseTest;
                 @MouseTest.performed += instance.OnMouseTest;
                 @MouseTest.canceled += instance.OnMouseTest;
+                @Dash.started += instance.OnDash;
+                @Dash.performed += instance.OnDash;
+                @Dash.canceled += instance.OnDash;
             }
         }
     }
@@ -281,5 +320,6 @@ public class @PlayerInputs : IInputActionCollection, IDisposable
         void OnAim(InputAction.CallbackContext context);
         void OnShoot(InputAction.CallbackContext context);
         void OnMouseTest(InputAction.CallbackContext context);
+        void OnDash(InputAction.CallbackContext context);
     }
 }
