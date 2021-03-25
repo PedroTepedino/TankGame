@@ -9,10 +9,7 @@ using UnityEngine.InputSystem;
 public class Player : MonoBehaviour, IHittable 
 {
     public PlayerInputs Controller { get; private set; }
-    public NavMeshAgent Agent => _agent;
-    public float Speed => _speed;
-    public float Acceleration => _acceleration;
-    public float MaxRotationAngle => _maxRotationAngle;
+
     public ATurret CurrentTurret => _currentTurret;
     public float MaxTurretRotation => _maxTurretRotation;
     public HeatManager HeatManager => _heatManager;
@@ -31,9 +28,8 @@ public class Player : MonoBehaviour, IHittable
     [FoldoutGroup("Attributes")]
     [BoxGroup("Attributes/Components")]
     [SerializeField] private Rigidbody _rigidbody;
-    [BoxGroup("Attributes/Components")]    
-    [SerializeField] private NavMeshAgent _agent;
-
+    
+    
     [BoxGroup("Attributes/Movement")]
     [SerializeField] private float _speed = 1f;
     [BoxGroup("Attributes/Movement")]
@@ -71,8 +67,8 @@ public class Player : MonoBehaviour, IHittable
     {
         Controller = GameManager.Instance.Controls;
 
-        _mover = new Mover(this);
-        _dasher = new Dasher(0f, 10f, _collisionMasks,this._agent, this.Controller.Gameplay.Dash, this.Controller.Gameplay.Move, _dashCoolAmount);
+        _mover = new Mover(_speed, _acceleration, _maxRotationAngle, this, _rigidbody, this.transform);
+        _dasher = new Dasher(0f, 10f, _collisionMasks, _rigidbody, this.Controller.Gameplay.Dash, this.Controller.Gameplay.Move, _dashCoolAmount, 2);
         _turretRotator = new TurretRotator(this);
         _shooter = new Shooter(this);
         _lifeSystem = new LifeSystem(_maxHealth);
@@ -191,11 +187,6 @@ public class Player : MonoBehaviour, IHittable
             _rigidbody.isKinematic = true;
         }
 
-        if (_agent == null)
-        {
-            _agent = this.GetComponent<NavMeshAgent>();
-        }
-
         if (_currentTurret == null)
         {
             _currentTurret = this.GetComponentInChildren<ATurret>();
@@ -262,7 +253,8 @@ public class Dasher
     private readonly float _distance;
     private readonly LayerMask _collisionLayers;
     private readonly float _timeBetweenDashes;
-    private readonly NavMeshAgent _agent;
+    private readonly float _bodyRadius;
+    private readonly Rigidbody _rigidbody;
     private readonly InputAction _dashAction;
     private readonly InputAction _moveDirectionAction;
     
@@ -273,15 +265,18 @@ public class Dasher
 
     public event Action OnDashed;
 
-    public Dasher(float timeBetweenDashes, float distance, LayerMask collisionLayers, NavMeshAgent agent, InputAction dashAction, InputAction moveDirectionAction, float dashCoolAmount)
+    //TODO: FIX THIS CLASS
+    
+    public Dasher(float timeBetweenDashes, float distance, LayerMask collisionLayers, Rigidbody rigidbody, InputAction dashAction, InputAction moveDirectionAction, float dashCoolAmount, float bodyRadius)
     {
-        _agent = agent;
         _dashAction = dashAction;
         _moveDirectionAction = moveDirectionAction;
         DashCoolAmount = dashCoolAmount;
+        _bodyRadius = bodyRadius;
         _timeBetweenDashes = timeBetweenDashes;
         _distance = distance;
         _collisionLayers = collisionLayers;
+        _rigidbody = rigidbody;
         _enabled = true;
 
         _dashAction.performed += OnDash;
@@ -302,11 +297,11 @@ public class Dasher
         if (!_enabled) return;
         
         var dashDirection = new Vector3(_moveDirection.x, 0, _moveDirection.y);
-        var agentPosition = _agent.transform.position;
+        var agentPosition = _rigidbody.transform.position;
         
         var hasHitSomething = Physics.SphereCast(
                 origin:agentPosition, 
-                radius:_agent.radius, 
+                radius:_bodyRadius, 
                 direction:dashDirection.normalized,
                 out RaycastHit hit,
                 maxDistance:_distance, 
@@ -316,7 +311,7 @@ public class Dasher
         Vector3 DashFinalPosition;
         if (hasHitSomething)
         {
-            var position = (hit.point - agentPosition).normalized * (hit.distance - _agent.radius);
+            var position = (hit.point - agentPosition).normalized * (hit.distance - _bodyRadius);
             DashFinalPosition = position + agentPosition + Vector3.up;
         }
         else
@@ -326,7 +321,7 @@ public class Dasher
 
         if (NavMesh.SamplePosition(DashFinalPosition, out NavMeshHit sample, 10.0f, NavMesh.AllAreas))
         {
-            _agent.Warp(sample.position);
+            _rigidbody.transform.position = sample.position;
             OnDashed?.Invoke();
         }
     }
@@ -484,7 +479,7 @@ public class Mover
     private readonly float _acceleration;
     private readonly float _maxRotation;
     private readonly Player _player;
-    private readonly NavMeshAgent _agent;
+    private readonly Rigidbody _body;
     private readonly Transform _transform;
 
     private float _currentDotProduct = 0f;
@@ -495,14 +490,14 @@ public class Mover
     private Quaternion _currentRotation = Quaternion.identity;
 
 
-    public Mover(Player player)
+    public Mover(float speed, float acceleration, float maxRotation, Player player, Rigidbody body, Transform transform)
     {
+        _speed = speed;
+        _acceleration = acceleration;
+        _maxRotation = maxRotation;
         _player = player;
-        _transform = player.transform;
-        _agent = player.Agent;
-        _speed = player.Speed;
-        _acceleration = player.Acceleration;
-        _maxRotation = player.MaxRotationAngle;
+        _body = body;
+        _transform = transform;
 
         _player.Controller.Gameplay.Move.started += OnMoveInput;
         _player.Controller.Gameplay.Move.performed += OnMoveInput;
@@ -535,7 +530,9 @@ public class Mover
             var forward = _transform.forward;
             _moveDirection = _currentDotProduct > 0 ? forward : -forward;
 
-            _agent.Move(_moveDirection * (_speed * _speedMultiplier));
+            //_agent.Move(_moveDirection * (_speed * _speedMultiplier));
+
+            _body.velocity = _moveDirection * (_speed * _speedMultiplier);
         }
         else
         {
@@ -543,7 +540,8 @@ public class Mover
             _speedMultiplier -= Time.deltaTime * _acceleration;
             _speedMultiplier = Mathf.Clamp01(_speedMultiplier);
             
-            _agent.Move(_lastInput * (_speed * _speedMultiplier));
+            //_agent.Move(_lastInput * (_speed * _speedMultiplier));
+            _body.velocity = _lastInput * (_speed * _speedMultiplier);
         }
         
         _transform.rotation = Quaternion.RotateTowards(_transform.rotation,_currentRotation,_maxRotation);
