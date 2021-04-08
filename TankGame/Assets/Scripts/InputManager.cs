@@ -1,11 +1,13 @@
+using System.Security.Cryptography.X509Certificates;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 public class InputManager : MonoBehaviour
 {
     public static InputManager Instance { get; private set; }
 
     public PlayerInputs Controls { get; private set; }
-    
+
     private void Awake()
     {
         if (Instance != null)

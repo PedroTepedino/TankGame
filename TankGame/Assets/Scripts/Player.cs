@@ -8,11 +8,8 @@ using UnityEngine.InputSystem;
 
 public class Player : MonoBehaviour, IHittable 
 {
-    public PlayerInputs Controller { get; private set; }
-
-    public ATurret CurrentTurret => _currentTurret;
-    public float MaxTurretRotation => _maxTurretRotation;
     public HeatManager HeatManager => _heatManager;
+    public float Radius { get => _bodyRadius; set => _bodyRadius = value; }
 
     //// Components
     private Mover _mover;
@@ -25,11 +22,10 @@ public class Player : MonoBehaviour, IHittable
     //// Properties
     [SerializeField] [InlineEditor(InlineEditorModes.FullEditor)] private ATurret _currentTurret;
 
-    [FoldoutGroup("Attributes")]
-    [BoxGroup("Attributes/Components")]
+    [FoldoutGroup("Attributes")] 
+    [BoxGroup("Attributes/Components")] 
     [SerializeField] private Rigidbody _rigidbody;
-    
-    
+
     [BoxGroup("Attributes/Movement")]
     [SerializeField] private float _speed = 1f;
     [BoxGroup("Attributes/Movement")]
@@ -47,7 +43,9 @@ public class Player : MonoBehaviour, IHittable
     [SerializeField] private LayerMask _collisionMasks;
     [BoxGroup("Attributes/Dash")]
     [SerializeField] private float _dashCoolAmount;
-    
+    [BoxGroup("Attributes/Dash")]
+    [SerializeField] private float _bodyRadius;
+
     [BoxGroup("Attributes/Heat")]
     [SerializeField] private float _maxHeat = 100f;
     [BoxGroup("Attributes/Heat")]
@@ -65,12 +63,10 @@ public class Player : MonoBehaviour, IHittable
 
     private void Awake()
     {
-        Controller = GameManager.Instance.Controls;
-
-        _mover = new Mover(_speed, _acceleration, _maxRotationAngle, this, _rigidbody, this.transform);
-        _dasher = new Dasher(0f, 10f, _collisionMasks, _rigidbody, this.Controller.Gameplay.Dash, this.Controller.Gameplay.Move, _dashCoolAmount, 2);
-        _turretRotator = new TurretRotator(this);
-        _shooter = new Shooter(this);
+        _mover = new Mover(_speed, _acceleration, _maxRotationAngle, this, _rigidbody, this.transform, InputManager.Instance.Controls.Gameplay.Move);
+        _dasher = new Dasher(0f, 10f, _collisionMasks, _rigidbody, _dashCoolAmount, _bodyRadius, InputManager.Instance.Controls.Gameplay.Dash, InputManager.Instance.Controls.Gameplay.Move);
+        _turretRotator = new TurretRotator(_maxTurretRotation, _currentTurret, InputManager.Instance.Controls.Gameplay.Aim,  InputManager.Instance.Controls.Gameplay.Move );
+        _shooter = new Shooter(_currentTurret, InputManager.Instance.Controls.Gameplay.Shoot);
         _lifeSystem = new LifeSystem(_maxHealth);
         _heatManager = new HeatManager(_maxHeat, _heatRecoverRate);
         
@@ -143,7 +139,7 @@ public class Player : MonoBehaviour, IHittable
 
     private void ListenOnOverHeat()
     {
-        Debug.LogWarning($"OverHeated!");
+        // Debug.LogWarning($"OverHeated!");
     }
 
     private void ListenOnHeatEmpty()
@@ -152,7 +148,9 @@ public class Player : MonoBehaviour, IHittable
 
         if (_heatStunRoutine != null)
             StopCoroutine(_heatStunRoutine);
-        
+
+        _mover.FullStop();
+
         _heatStunRoutine = StartCoroutine(EndHeatStun());
     }
 
@@ -183,8 +181,6 @@ public class Player : MonoBehaviour, IHittable
         if (_rigidbody != null)
         {
             _rigidbody.constraints = (RigidbodyConstraints) 80; // Freeze rotation X & Z
-
-            _rigidbody.isKinematic = true;
         }
 
         if (_currentTurret == null)
@@ -267,7 +263,7 @@ public class Dasher
 
     //TODO: FIX THIS CLASS
     
-    public Dasher(float timeBetweenDashes, float distance, LayerMask collisionLayers, Rigidbody rigidbody, InputAction dashAction, InputAction moveDirectionAction, float dashCoolAmount, float bodyRadius)
+    public Dasher(float timeBetweenDashes, float distance, LayerMask collisionLayers, Rigidbody rigidbody, float dashCoolAmount, float bodyRadius, InputAction dashAction, InputAction moveDirectionAction)
     {
         _dashAction = dashAction;
         _moveDirectionAction = moveDirectionAction;
@@ -382,23 +378,19 @@ public class LifeSystem
 
 public class Shooter
 {
-    private readonly Player _player;
     private readonly InputAction _shootAction;
-
-    private readonly HeatManager _heatManager;
 
     private ATurret _currentTurret;
 
     private float _timer;
 
-    public Shooter(Player player)
+    public Shooter(ATurret currentTurret, InputAction shootAction)
     {
-        _player = player;
-        _shootAction = _player.Controller.Gameplay.Shoot;
-        
-        _currentTurret = _player.CurrentTurret;
-    }
+        _shootAction = shootAction;
 
+        _currentTurret = currentTurret;
+    }
+    
     public void Tick()
     {
         if (_shootAction.phase == InputActionPhase.Started)
@@ -411,21 +403,20 @@ public class Shooter
                     _timer = _currentTurret.TimeBetweenShots;
                 }
             }
-            else
-            {
-                _currentTurret = _player.CurrentTurret;
-            }
         }
         
         _timer -= Time.deltaTime;
         _timer = Mathf.Clamp(_timer, 0, _currentTurret.TimeBetweenShots);
     }
+
+    public void ChangeCurrentTurret(ATurret current)
+    {
+        _currentTurret = current;
+    }
 }
 
 public class TurretRotator
 {
-    private readonly Player _player;
-
     private readonly float _maxRotationSpeed;
     
     private readonly InputAction _aimAction;
@@ -434,27 +425,21 @@ public class TurretRotator
     private ATurret _currentTurret;
     private Quaternion _currentRotation;
 
-    public TurretRotator(Player player)
+    public TurretRotator(float maxRotationSpeed, ATurret currentTurret, InputAction aimAction, InputAction moveAction)
     {
-        _player = player;
-        _currentTurret = _player.CurrentTurret;
-        _maxRotationSpeed = _player.MaxTurretRotation;
+        _maxRotationSpeed = maxRotationSpeed;
+        _aimAction = aimAction;
+        _moveAction = moveAction;
 
-        _aimAction = _player.Controller.Gameplay.Aim;
-        _moveAction = _player.Controller.Gameplay.Move;
+        _currentTurret = currentTurret;
     }
 
     public void Tick()
     {
-        if (_currentTurret == null)
-        {
-            _currentTurret = _player.CurrentTurret;
-            return;
-        }
+        if (_currentTurret == null) return;
         
         var input = _aimAction.ReadValue<Vector2>();
 
-        
         if (input.magnitude > 0.1f)
         {
             _currentRotation = Quaternion.Euler(0, Mathf.Atan2(input.x, input.y) * Mathf.Rad2Deg, 0); 
@@ -471,6 +456,11 @@ public class TurretRotator
         _currentTurret.transform.rotation =
             Quaternion.RotateTowards(_currentTurret.transform.rotation, _currentRotation, _maxRotationSpeed);
     }
+
+    public void ChangeTurret(ATurret currentTurret)
+    {
+        _currentTurret = currentTurret;
+    }
 }
 
 public class Mover
@@ -478,9 +468,9 @@ public class Mover
     private readonly float _speed;
     private readonly float _acceleration;
     private readonly float _maxRotation;
-    private readonly Player _player;
     private readonly Rigidbody _body;
     private readonly Transform _transform;
+    private readonly InputAction _moveAction;
 
     private float _currentDotProduct = 0f;
     private float _speedMultiplier = 0f;
@@ -490,29 +480,31 @@ public class Mover
     private Quaternion _currentRotation = Quaternion.identity;
 
 
-    public Mover(float speed, float acceleration, float maxRotation, Player player, Rigidbody body, Transform transform)
+    public Mover(float speed, float acceleration, float maxRotation, Player player, Rigidbody body, Transform transform, InputAction moveAction)
     {
         _speed = speed;
         _acceleration = acceleration;
         _maxRotation = maxRotation;
-        _player = player;
         _body = body;
         _transform = transform;
+        _moveAction = moveAction;
 
-        _player.Controller.Gameplay.Move.started += OnMoveInput;
-        _player.Controller.Gameplay.Move.performed += OnMoveInput;
-        _player.Controller.Gameplay.Move.canceled += OnMoveInput;
+        _moveAction.started += OnMoveInput;
+        _moveAction.performed += OnMoveInput;
+        _moveAction.canceled += OnMoveInput;
     }
 
     ~Mover()
     {
-        _player.Controller.Gameplay.Move.started -= OnMoveInput;
-        _player.Controller.Gameplay.Move.performed -= OnMoveInput;
-        _player.Controller.Gameplay.Move.canceled -= OnMoveInput;
+        _moveAction.started -= OnMoveInput;
+        _moveAction.performed -= OnMoveInput;
+        _moveAction.canceled -= OnMoveInput;
     }
 
     public void Tick()
     {
+        var yVelocity = _body.velocity.y;
+
         if (_currentInput.magnitude >= 0.1f)
         {
             // _speedMultiplier = Mathf.Lerp(_speedMultiplier, 1, Time.deltaTime * _acceleration);
@@ -543,7 +535,12 @@ public class Mover
             //_agent.Move(_lastInput * (_speed * _speedMultiplier));
             _body.velocity = _lastInput * (_speed * _speedMultiplier);
         }
-        
+
+        var currentVelocity = _body.velocity;
+        currentVelocity.y = yVelocity;
+
+        _body.velocity = currentVelocity;
+
         _transform.rotation = Quaternion.RotateTowards(_transform.rotation,_currentRotation,_maxRotation);
     }
 
@@ -563,5 +560,11 @@ public class Mover
             var tempVector = _currentDotProduct > 0 ? aux : -aux;
             _currentRotation = Quaternion.Euler(0, Mathf.Atan2(tempVector.x, tempVector.y) * Mathf.Rad2Deg, 0);
         }
+    }
+
+    public void FullStop()
+    {
+        _body.velocity = Vector3.zero;
+        _body.angularVelocity = Vector3.zero;
     }
 }

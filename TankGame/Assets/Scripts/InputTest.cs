@@ -12,7 +12,7 @@ public class InputTest : MonoBehaviour
     private void Awake()
     {
         _camera = UnityEngine.Camera.main;
-        _mousePosition = GameManager.Instance.Controls.Gameplay.MouseTest;
+        //_mousePosition = GameManager.Instance.Controls.Gameplay.MouseTest;
     }
 
     private void Update()
